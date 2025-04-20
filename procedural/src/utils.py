@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+import polars as pl
 from typing import Sequence
 
 class PortfolioMetrics:
@@ -10,7 +10,7 @@ class PortfolioMetrics:
     @staticmethod
     def compute_portfolio_returns(
         weights: Sequence[float],
-        returns: pd.DataFrame
+        returns: pl.DataFrame
     ) -> np.ndarray:
         """
         Compute portfolio returns given prices and weights:
@@ -18,7 +18,7 @@ class PortfolioMetrics:
 
         Args:
             weights (Sequence[float]): List of weights for each stock.
-            returns (pd.DataFrame): DataFrame containing daily returns.
+            returns (pl.DataFrame): DataFrame containing daily returns.
 
         Returns:
             np.ndarray: Array containing portfolio returns.
@@ -29,9 +29,12 @@ class PortfolioMetrics:
         # Ensure weights sum to 1
         if not np.isclose(np.sum(weights_array), 1.0):
             raise ValueError("Weights must sum to 1.0")
-            
+        
+        # Convert Polars DataFrame to numpy array for matrix multiplication
+        returns_array = returns.to_numpy()
+        
         # Compute portfolio returns using matrix multiplication
-        portfolio_returns = returns.dot(weights_array)
+        portfolio_returns = returns_array.dot(weights_array)
         
         return portfolio_returns
 
