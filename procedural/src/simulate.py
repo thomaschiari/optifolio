@@ -56,26 +56,61 @@ class PortfolioSimulator:
         Returns:
             np.ndarray: Random weights for the portfolio.
         """
-        # Generate random weights
-        weights = np.random.random(n_assets)
+        weights = np.random.dirichlet(np.ones(n_assets))
+        return weights / sum(weights)
+    
+    def _apply_max_weight_constraint(self, weights: np.ndarray) -> np.ndarray:
+        """
+        Apply maximum weight constraint to the portfolio weights.
         
-        # Apply maximum weight constraint
-        if self.max_weight < 1.0:
-            # Scale down weights that exceed max_weight
-            excess = np.maximum(weights - self.max_weight, 0)
-            weights = np.minimum(weights, self.max_weight)
+        Args:
+            weights (np.ndarray): Original portfolio weights.
             
-            # Redistribute excess weight proportionally to weights below max_weight
-            available = 1.0 - np.sum(weights)
-            if available > 0 and np.sum(excess) > 0:
-                below_max = weights < self.max_weight
-                if np.any(below_max):
-                    weights[below_max] += (excess.sum() * weights[below_max] / np.sum(weights[below_max]))
+        Returns:
+            np.ndarray: Adjusted weights that respect the maximum weight constraint.
+        """
+        # If max_weight is 1.0 or greater, no constraint needed
+        if self.max_weight >= 1.0:
+            return weights
+            
+        # Create a copy of the weights to avoid modifying the original
+        adjusted_weights = weights.copy()
         
-        # Normalize weights to sum to 1
-        weights = weights / np.sum(weights)
+        # Find weights that exceed the maximum
+        excess_mask = adjusted_weights > self.max_weight
+        excess_weights = adjusted_weights[excess_mask]
         
-        return weights
+        # If no weights exceed the maximum, return the original weights
+        if not np.any(excess_mask):
+            return adjusted_weights
+            
+        # Calculate the total excess weight
+        total_excess = np.sum(excess_weights) - self.max_weight * np.sum(excess_mask)
+        
+        # Cap the weights that exceed the maximum
+        adjusted_weights[excess_mask] = self.max_weight
+        
+        # Find weights that are below the maximum
+        below_max_mask = ~excess_mask
+        below_max_weights = adjusted_weights[below_max_mask]
+        
+        # If there are no weights below the maximum, we need to redistribute
+        if not np.any(below_max_mask):
+            # In this case, we need to set all weights to max_weight
+            # and then normalize to ensure they sum to 1
+            adjusted_weights = np.ones_like(adjusted_weights) * self.max_weight
+            return adjusted_weights / np.sum(adjusted_weights)
+            
+        # Calculate the sum of weights below the maximum
+        sum_below_max = np.sum(below_max_weights)
+        
+        # Redistribute the excess weight proportionally to weights below the maximum
+        if sum_below_max > 0:
+            redistribution_factor = total_excess / sum_below_max
+            adjusted_weights[below_max_mask] += below_max_weights * redistribution_factor
+            
+        # Normalize to ensure weights sum to 1
+        return adjusted_weights / np.sum(adjusted_weights)
     
     def _simulate_one(self, combo: Tuple[str, ...]) -> Dict[str, Any]:
         """
@@ -99,6 +134,7 @@ class PortfolioSimulator:
         for _ in range(self.num_simulations):
             # Sample random weights
             weights = self._sample_weights(len(combo))
+            weights = self._apply_max_weight_constraint(weights)    
             
             # Compute portfolio returns
             portfolio_returns = PortfolioMetrics.compute_portfolio_returns(
