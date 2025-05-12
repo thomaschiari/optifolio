@@ -3,7 +3,7 @@ import numpy as np
 import polars as pl
 from typing import List, Tuple, Optional, Dict, Any
 from joblib import Parallel, delayed
-from utils import PortfolioMetrics
+from .utils import PortfolioMetrics
 
 class PortfolioSimulator:
     """
