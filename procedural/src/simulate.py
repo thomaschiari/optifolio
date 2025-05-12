@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-import polars as pl
+import pandas as pd
 from typing import List, Tuple, Optional, Dict, Any
 from joblib import Parallel, delayed
 from .utils import PortfolioMetrics
@@ -10,7 +10,7 @@ class PortfolioSimulator:
     Simulate portfolio performance to maximize Sharpe ratio.  
 
     Attributes:
-        returns (pl.DataFrame): DataFrame containing daily returns.
+        returns (pd.DataFrame): DataFrame containing daily returns.
         risk_free_rate (float): Risk-free rate.
         num_simulations (int): Number of simulations to run.
         num_cores (int): Number of cores to use for parallel processing.
@@ -21,7 +21,7 @@ class PortfolioSimulator:
 
     def __init__(
         self,
-        returns: pl.DataFrame,
+        returns: pd.DataFrame,
         risk_free_rate: float = 0.0,
         num_simulations: int = 1000,
         num_cores: int = 4,
@@ -123,11 +123,11 @@ class PortfolioSimulator:
             Dict[str, Any]: Dictionary containing simulation results.
         """
         # Extract returns for the selected tickers
-        selected_returns = self.returns.select(list(combo))
+        selected_returns = self.returns[list(combo)]
         
         # Run multiple simulations with different weights
         best_sharpe = -np.inf
-        best_weights = None
+        best_weights = np.ones(len(combo)) / len(combo)  # Initialize with equal weights
         best_annualized_return = 0
         best_annualized_volatility = 0
         
@@ -168,12 +168,12 @@ class PortfolioSimulator:
         
         return result
     
-    def run(self) -> pl.DataFrame:
+    def run(self) -> pd.DataFrame:
         """
         Run the simulation.
         
         Returns:
-            pl.DataFrame: DataFrame containing simulation results.
+            pd.DataFrame: DataFrame containing simulation results.
         """
         # Generate all possible combinations
         combinations = list(self._generate_combinations())
@@ -183,10 +183,10 @@ class PortfolioSimulator:
             delayed(self._simulate_one)(combo) for combo in combinations
         )
         
-        # Convert results to Polars DataFrame
-        df_results = pl.DataFrame(results)
+        # Convert results to DataFrame
+        df_results = pd.DataFrame(results)
         
         # Sort by Sharpe ratio in descending order
-        df_results = df_results.sort('sharpe_ratio', descending=True)
+        df_results = df_results.sort_values('sharpe_ratio', ascending=False)
         
         return df_results

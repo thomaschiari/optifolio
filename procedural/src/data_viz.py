@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.subplots as sp
 import numpy as np
-import polars as pl
+import pandas as pd
 from typing import List, Dict, Any, Optional, Tuple
 
 class DataViz:
@@ -14,28 +14,25 @@ class DataViz:
     """
     
     @staticmethod
-    def plot_stock_prices(prices_df: pl.DataFrame, title: str = "Stock Prices Over Time") -> go.Figure:
+    def plot_stock_prices(prices_df: pd.DataFrame, title: str = "Stock Prices Over Time") -> go.Figure:
         """
         Create a line plot of stock prices over time.
         
         Args:
-            prices_df (pl.DataFrame): DataFrame containing stock prices.
+            prices_df (pd.DataFrame): DataFrame containing stock prices.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = prices_df.to_pandas()
-        
         # Create figure
         fig = go.Figure()
         
         # Add traces for each stock
-        for column in df.columns:
+        for column in prices_df.columns:
             fig.add_trace(go.Scatter(
-                x=df.index,
-                y=df[column],
+                x=prices_df.index,
+                y=prices_df[column],
                 name=column,
                 mode='lines'
             ))
@@ -58,28 +55,25 @@ class DataViz:
         return fig
     
     @staticmethod
-    def plot_stock_returns(returns_df: pl.DataFrame, title: str = "Daily Returns") -> go.Figure:
+    def plot_stock_returns(returns_df: pd.DataFrame, title: str = "Daily Returns") -> go.Figure:
         """
         Create a line plot of daily returns.
         
         Args:
-            returns_df (pl.DataFrame): DataFrame containing daily returns.
+            returns_df (pd.DataFrame): DataFrame containing daily returns.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = returns_df.to_pandas()
-        
         # Create figure
         fig = go.Figure()
         
         # Add traces for each stock
-        for column in df.columns:
+        for column in returns_df.columns:
             fig.add_trace(go.Scatter(
-                x=df.index,
-                y=df[column],
+                x=returns_df.index,
+                y=returns_df[column],
                 name=column,
                 mode='lines'
             ))
@@ -102,27 +96,24 @@ class DataViz:
         return fig
     
     @staticmethod
-    def plot_returns_distribution(returns_df: pl.DataFrame, title: str = "Returns Distribution") -> go.Figure:
+    def plot_returns_distribution(returns_df: pd.DataFrame, title: str = "Returns Distribution") -> go.Figure:
         """
         Create a histogram of returns for each stock.
         
         Args:
-            returns_df (pl.DataFrame): DataFrame containing daily returns.
+            returns_df (pd.DataFrame): DataFrame containing daily returns.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = returns_df.to_pandas()
-        
         # Create figure
         fig = go.Figure()
         
         # Add traces for each stock
-        for column in df.columns:
+        for column in returns_df.columns:
             fig.add_trace(go.Histogram(
-                x=df[column],
+                x=returns_df[column],
                 name=column,
                 nbinsx=50,
                 opacity=0.7
@@ -146,22 +137,19 @@ class DataViz:
         return fig
     
     @staticmethod
-    def plot_correlation_heatmap(returns_df: pl.DataFrame, title: str = "Correlation Heatmap") -> go.Figure:
+    def plot_correlation_heatmap(returns_df: pd.DataFrame, title: str = "Correlation Heatmap") -> go.Figure:
         """
         Create a correlation heatmap of returns.
         
         Args:
-            returns_df (pl.DataFrame): DataFrame containing daily returns.
+            returns_df (pd.DataFrame): DataFrame containing daily returns.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = returns_df.to_pandas()
-        
         # Calculate correlation matrix
-        corr_matrix = df.corr()
+        corr_matrix = returns_df.corr()
         
         # Create heatmap
         fig = go.Figure(data=go.Heatmap(
@@ -190,7 +178,7 @@ class DataViz:
     @staticmethod
     def plot_portfolio_performance(
         weights: List[float],
-        returns_df: pl.DataFrame,
+        returns_df: pd.DataFrame,
         tickers: List[str],
         title: str = "Portfolio Performance"
     ) -> go.Figure:
@@ -199,7 +187,7 @@ class DataViz:
         
         Args:
             weights (List[float]): Portfolio weights.
-            returns_df (pl.DataFrame): DataFrame containing daily returns.
+            returns_df (pd.DataFrame): DataFrame containing daily returns.
             tickers (List[str]): List of tickers in the portfolio.
             title (str): Title for the plot.
             
@@ -207,10 +195,10 @@ class DataViz:
             go.Figure: Plotly figure object.
         """
         # Select only the tickers in the portfolio
-        portfolio_returns = returns_df.select(tickers)
+        portfolio_returns = returns_df[tickers]
         
         # Convert to numpy for calculations
-        returns_array = portfolio_returns.to_numpy()
+        returns_array = portfolio_returns.values
         weights_array = np.array(weights)
         
         # Calculate portfolio returns
@@ -282,38 +270,35 @@ class DataViz:
     
     @staticmethod
     def plot_simulation_results(
-        simulation_results: pl.DataFrame,
+        simulation_results: pd.DataFrame,
         title: str = "Portfolio Simulation Results"
     ) -> go.Figure:
         """
         Create a scatter plot of simulation results.
         
         Args:
-            simulation_results (pl.DataFrame): DataFrame containing simulation results.
+            simulation_results (pd.DataFrame): DataFrame containing simulation results.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = simulation_results.to_pandas()
-        
         # Create figure
         fig = go.Figure()
         
         # Add trace for simulation results
         fig.add_trace(go.Scatter(
-            x=df['annualized_volatility'],
-            y=df['annualized_return'],
+            x=simulation_results['annualized_volatility'],
+            y=simulation_results['annualized_return'],
             mode='markers',
             marker=dict(
                 size=10,
-                color=df['sharpe_ratio'],
+                color=simulation_results['sharpe_ratio'],
                 colorscale='Viridis',
                 showscale=True,
                 colorbar=dict(title='Sharpe Ratio')
             ),
-            text=[f"Sharpe: {sr:.2f}" for sr in df['sharpe_ratio']],
+            text=[f"Sharpe: {sr:.2f}" for sr in simulation_results['sharpe_ratio']],
             hoverinfo='text'
         ))
         
@@ -329,24 +314,21 @@ class DataViz:
     
     @staticmethod
     def plot_efficient_frontier(
-        simulation_results: pl.DataFrame,
+        simulation_results: pd.DataFrame,
         title: str = "Efficient Frontier"
     ) -> go.Figure:
         """
         Create a plot of the efficient frontier.
         
         Args:
-            simulation_results (pl.DataFrame): DataFrame containing simulation results.
+            simulation_results (pd.DataFrame): DataFrame containing simulation results.
             title (str): Title for the plot.
             
         Returns:
             go.Figure: Plotly figure object.
         """
-        # Convert to pandas for easier plotting with Plotly
-        df = simulation_results.to_pandas()
-        
         # Sort by volatility
-        df = df.sort_values('annualized_volatility')
+        df = simulation_results.sort_values('annualized_volatility')
         
         # Create figure
         fig = go.Figure()
@@ -390,7 +372,7 @@ class DataViz:
     @staticmethod
     def plot_portfolio_comparison(
         portfolios: Dict[str, Tuple[List[float], List[str]]],
-        returns_df: pl.DataFrame,
+        returns_df: pd.DataFrame,
         title: str = "Portfolio Comparison"
     ) -> go.Figure:
         """
@@ -399,7 +381,7 @@ class DataViz:
         Args:
             portfolios (Dict[str, Tuple[List[float], List[str]]]): Dictionary of portfolios.
                 Keys are portfolio names, values are tuples of (weights, tickers).
-            returns_df (pl.DataFrame): DataFrame containing daily returns.
+            returns_df (pd.DataFrame): DataFrame containing daily returns.
             title (str): Title for the plot.
             
         Returns:
@@ -411,10 +393,10 @@ class DataViz:
         # Add trace for each portfolio
         for name, (weights, tickers) in portfolios.items():
             # Select only the tickers in the portfolio
-            portfolio_returns = returns_df.select(tickers)
+            portfolio_returns = returns_df[tickers]
             
             # Convert to numpy for calculations
-            returns_array = portfolio_returns.to_numpy()
+            returns_array = portfolio_returns.values
             weights_array = np.array(weights)
             
             # Calculate portfolio returns

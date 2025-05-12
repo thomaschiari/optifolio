@@ -9,7 +9,7 @@ This script demonstrates the functionality of the Optifolio library for portfoli
 import sys
 import time
 import numpy as np
-import polars as pl
+import pandas as pd
 import plotly.io as pio
 from datetime import datetime, timedelta
 from argparse import ArgumentParser
@@ -130,7 +130,7 @@ def main():
     print("\n5. Analyzing Best Portfolio...")
     
     # Get the best portfolio
-    best_portfolio = simulation_results.row(0)
+    best_portfolio = simulation_results.iloc[0]
     best_tickers = best_portfolio['tickers']
     best_weights = best_portfolio['weights']
     best_sharpe = best_portfolio['sharpe_ratio']
@@ -198,7 +198,7 @@ def main():
     # Save simulation results
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     results_filename = f"simulation_results_{timestamp}.csv"
-    simulation_results.write_csv(results_filename)
+    simulation_results.to_csv(results_filename)
     print(f"Results saved to {results_filename}")
 
     # Save performance metrics
@@ -212,6 +212,11 @@ def main():
         'best_return': best_return,
         'best_volatility': best_volatility
     }
+
+    # Save performance metrics to CSV
+    metrics_filename = f"performance_metrics_{timestamp}.csv"
+    pd.DataFrame([performance]).to_csv(metrics_filename, index=False)
+    print(f"Performance metrics saved to {metrics_filename}")
 
     print("\nPerformance Metrics:")
     for key, value in performance.items():

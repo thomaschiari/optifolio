@@ -2,7 +2,9 @@ import pandas as pd
 import yfinance as yf
 from typing import List, Optional
 import time
+import random
 from datetime import datetime
+from yfinance.exceptions import YFRateLimitError
 
 class DataLoader:
     """
@@ -25,13 +27,42 @@ class DataLoader:
         self.prices_df = None
         self.returns_df = None
 
-    def fetch_data(self, batch_size: int = 1, delay: float = 1.0) -> pd.DataFrame:
+    def _download_batch(self, batch_tickers: List[str], max_retries: int = 5) -> pd.DataFrame:
         """
-        Fetch stock data from Yahoo Finance with rate limiting.
+        Download a batch of tickers with retry logic for rate limiting.
+
+        Args:
+            batch_tickers (List[str]): List of tickers to download
+            max_retries (int): Maximum number of retry attempts
+
+        Returns:
+            pd.DataFrame: DataFrame containing the downloaded data
+        """
+        for attempt in range(max_retries):
+            try:
+                df = yf.download(
+                    tickers=batch_tickers,
+                    start=self.start_date,
+                    end=self.end_date,
+                    interval=self.interval,
+                    group_by="ticker",
+                    progress=False,
+                    threads=False,
+                    auto_adjust=False,
+                )
+                return df
+            except YFRateLimitError:
+                wait = 2 ** attempt + random.uniform(0, 1)
+                print(f"Rate‑limited. Retry in {wait:.1f}s …")
+                time.sleep(wait)
+        raise RuntimeError(f"Unable to fetch {batch_tickers} after {max_retries} retries")
+
+    def fetch_data(self, batch_size: int = 5) -> pd.DataFrame:
+        """
+        Fetch stock data from Yahoo Finance with improved rate limiting and error handling.
 
         Args:
             batch_size (int): Number of tickers to fetch in each batch.
-            delay (float): Delay in seconds between batches to avoid rate limiting.
 
         Returns:
             pd.DataFrame: DataFrame containing stock data.
@@ -45,19 +76,8 @@ class DataLoader:
             
             try:
                 # Download data for the current batch
-                batch_data = yf.download(
-                    batch_tickers,
-                    start=self.start_date,
-                    end=self.end_date,
-                    interval=self.interval,
-                    progress=False
-                )["Adj Close"]
-                
+                batch_data = self._download_batch(batch_tickers)
                 all_data.append(batch_data)
-                
-                # Add delay between batches to avoid rate limiting
-                if i + batch_size < len(self.tickers):
-                    time.sleep(delay)
                     
             except Exception as e:
                 print(f"Error fetching data for batch {batch_tickers}: {str(e)}")
@@ -65,7 +85,10 @@ class DataLoader:
         
         # Combine all batches
         if all_data:
-            self.prices_df = pd.concat(all_data, axis=1)
+            combined_data = pd.concat(all_data, axis=1)
+            # Extract Close prices and flatten multi-level columns
+            self.prices_df = combined_data.loc[:, pd.IndexSlice[:, "Close"]]
+            self.prices_df.columns = self.prices_df.columns.get_level_values(0)
             return self.prices_df
         else:
             raise ValueError("No data was successfully fetched")
