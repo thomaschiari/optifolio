@@ -13,7 +13,7 @@ import pandas as pd
 import plotly.io as pio
 from datetime import datetime, timedelta
 from argparse import ArgumentParser
-
+import os
 # Set Plotly to render in browser
 pio.renderers.default = 'browser'
 
@@ -79,11 +79,15 @@ def main():
     
     # 3. Run Portfolio Simulations
     print("\n3. Running Portfolio Simulations...")
+
+    # Check how many cores are available
+    num_cores = os.cpu_count()
+    print(f"Available CPU cores: {num_cores}")
     
     # Define simulation parameters
     risk_free_rate = 0.02  # 2% annual risk-free rate
     num_simulations = 1000  # Number of simulations per combination
-    num_cores = 4  # Number of CPU cores to use
+    num_cores = num_cores - 1  # Number of CPU cores to use
     select_k_tickers = 10  # Number of tickers to select for each portfolio
     max_weight = 0.3  # Maximum weight for each ticker
 
