@@ -84,6 +84,26 @@ dotnet build -c Release && dotnet run -c Release
 | `portfolio_results.csv`   | Cada linha = melhor carteira por combinação |
 | `performance_results.csv` | Métricas globais da simulação               |
 
+### Backtesting Q1 2025 (opcional)
+
+Para testar a carteira otimizada no primeiro trimestre de 2025 vá para a raiz do projeto e execute o script (opcional, pois os dados já estão disponíveis no repositório):
+
+```bash
+cd functional/utils
+python test_q1_2025.py
+```
+
+As bibliotecas necessárias para executar o script já foram instaladas no passo 2 da instalação. Se não estiverem instaladas, instale-as com o comando:
+
+```bash
+pip install -r requirements.txt
+```
+
+*Output* gerado:
+| Arquivo                   | Descrição                                   |
+| ------------------------- | ------------------------------------------- |
+| `backtesting_results.csv` | Comparativo Q4 2024 vs Q1 2025              |
+
 ---
 
 ## 5 · Resultados obtidos
@@ -123,5 +143,16 @@ A melhor carteira encontrada teve as seguintes características:
 | 3 | 3.23 | 40.04% | 12.40% | CSCO, V, PG, MCD, AMZN, MMM, MSFT, SHW, NVDA, HD, AXP, CVX, NKE, IBM, GS, DIS, JPM, VZ, UNH, HON, AAPL, WMT, TRV, JNJ, CRM |
 | 4 | 3.23 | 40.06% | 12.41% | CSCO, V, PG, MCD, AMZN, MMM, KO, MSFT, NVDA, HD, AXP, CVX, NKE, IBM, GS, DIS, JPM, AMGN, UNH, HON, AAPL, WMT, TRV, JNJ, CRM |
 | 5 | 3.23 | 39.96% | 12.37% | CSCO, V, PG, MCD, AMZN, KO, MSFT, SHW, NVDA, HD, AXP, CVX, NKE, IBM, GS, DIS, JPM, VZ, UNH, HON, AAPL, WMT, TRV, JNJ, CRM |
+
+### 5.3 · Backtesting Q1 2025
+
+A carteira otimizada para Q4 2024 foi testada no primeiro trimestre de 2025:
+
+| Período | Retorno Anual | Volatilidade | Sharpe |
+|---------|---------------|--------------|---------|
+| Q4 2024 | 40.11% | 12.40% | 3.23 |
+| Q1 2025 | -14.29% | 15.37% | -0.93 |
+
+Como pode ser visto, a carteira otimizada para Q4 2024 não performou bem no primeiro trimestre de 2025.
 
 > **Nota**: Os pesos de cada ativo podem ser encontrados no arquivo `portfolio_results.csv`. A simulação foi executada com 25 ativos por carteira, selecionados entre os 30 ativos disponíveis.
