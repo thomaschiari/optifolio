@@ -22,7 +22,9 @@ DATA_DIR = (
 # Create data directories
 SIMULATION_DIR = DATA_DIR
 
-for directory in [SIMULATION_DIR]:
+BACKTEST_DIR = DATA_DIR / "backtest"
+
+for directory in [SIMULATION_DIR, BACKTEST_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 # --------- helpers ------------
@@ -66,3 +68,6 @@ if __name__ == "__main__":
     # Download 2024 data (Aug-Dec) for simulation
     print("\nDownloading 2024 data (Aug-Dec) for simulation...")
     fetch_dow30("2024-08-01", "2024-12-31", SIMULATION_DIR)
+
+    print("\nDownloading 2025 data (Jan-Mar) for backtest...")
+    fetch_dow30("2025-01-01", "2025-03-31", BACKTEST_DIR)
