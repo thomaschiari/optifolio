@@ -1,0 +1,13 @@
+Metric,Value
+TotalCombinations,142506
+SimulationTimeSeconds,464.53
+CombinationsPerSecond,306.78
+BestSharpe,3.234417
+WorstSharpe,1.760729
+AverageSharpe,2.655420
+BestReturn,0.442770
+WorstReturn,0.218156
+AverageReturn,0.336423
+BestVolatility,0.099847
+WorstVolatility,0.182179
+AverageVolatility,0.126879
